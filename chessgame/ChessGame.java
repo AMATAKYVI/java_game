@@ -14,6 +14,7 @@ public class ChessGame extends JFrame {
     // Icons for the chess pieces (you can replace these with your own icons)
     private final ImageIcon[] pieceIcons;
     private JButton[][] buttons = new JButton[8][8];
+    private JButton selectedButton = null;
 
     public ChessGame() {
         this.chessBoard = new Board();
@@ -33,66 +34,139 @@ public class ChessGame extends JFrame {
             for (int j = 0; j < 8; j++) {
                 Spot spot = chessBoard.getSpot(i, j);
                 JButton button = new JButton();
-                buttons[i][j] = button; // Add this line to initialize the buttons array
-                if ((i + j) % 2 == 0) {
-                    button.setBackground(Color.gray);
-                } else {
-                    button.setBackground(Color.white);
-                }
+                buttons[i][j] = button;
                 contentPane.add(button);
-                setPieceIcon(button, spot.getPiece()); // Set icon for the piece on this spot
+                setPieceIcon(button, spot.getPiece());
                 int finalI = i;
                 int finalJ = j;
                 button.addActionListener(new ActionListener() {
                     public void actionPerformed(ActionEvent e) {
-                        System.out.println("Clicked on: " + finalI + ", " + finalJ);
-                        Piece piece = spot.getPiece();
-                        if (piece != null && piece.getType() == PieceType.PAWN) {
-                            int currentX = finalI; // Current row
-                            int currentY = finalJ; // Current column
-                            int targetX; // Target row
-                            int targetY = finalJ; // Target column
-
-                            if (piece.isWhite()) {
-                                targetX = currentX - 2; // White pawns move up
-                            } else {
-                                targetX = currentX + 2; // Black pawns move down
+                        if (selectedButton == null) {
+                            Piece piece = spot.getPiece();
+                            if (piece != null && piece.getType() == PieceType.PAWN) {
+                                selectedButton = button;
+                                highlightValidMoves(finalI, finalJ, piece.isWhite());
                             }
-
-                            // Check if the target spot is within the board boundaries
-                            if (targetX >= 0 && targetX < 8) {
-                                Spot targetSpot = chessBoard.getSpot(targetX, targetY);
-                                Spot nextSpot = chessBoard
-                                        .getSpot(targetX + (piece.isWhite() ? 1 : -1), targetY);
-
-                                if (targetSpot.isEmpty() && nextSpot.isEmpty()) {
-                                    // If both the target spot and the spot in front of it are
-                                    // empty, move the pawn
-                                    chessBoard.movePiece(currentX, currentY, targetX, targetY);
-                                    // Update the GUI to reflect the move
-                                    setPieceIcon(button, null); // Clear the icon from the current
-                                                                // spot
-                                    setPieceIcon(getButton(targetX, targetY), piece); // Set the
-                                                                                      // icon on the
-                                                                                      // target spot
-                                } else {
-                                    // If the target spot or the spot in front of it is not empty,
-                                    // the move is invalid
-                                    System.out.println(
-                                            "Invalid move: The target spot or the spot in front of it is not empty.");
-                                }
-                            } else {
-                                // If the target spot is out of bounds, the move is invalid
-                                System.out
-                                        .println("Invalid move: The target spot is out of bounds.");
-                            }
+                        } else {
+                            int startX = getButtonX(selectedButton);
+                            int startY = getButtonY(selectedButton);
+                            int endX = finalI;
+                            int endY = finalJ;
+                            movePiece(startX, startY, endX, endY);
+                            resetButtonBackground();
+                            selectedButton = null;
                         }
                     }
                 });
-
             }
         }
     }
+
+    private int getButtonX(JButton button) {
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                if (buttons[i][j] == button) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    private int getButtonY(JButton button) {
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                if (buttons[i][j] == button) {
+                    return j;
+                }
+            }
+        }
+        return -1;
+    }
+
+    private void resetButtonBackground() {
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                if ((i + j) % 2 == 0) {
+                    buttons[i][j].setBackground(Color.GRAY);
+                } else {
+                    buttons[i][j].setBackground(Color.WHITE);
+                }
+            }
+        }
+    }
+
+    private void highlightValidMoves(int x, int y, boolean isWhite) {
+        int stepForward = isWhite ? -1 : 1;
+        int targetX = x + stepForward;
+
+        // Check if the spot one step forward is empty and highlight it
+        if (targetX >= 0 && targetX < 8 && chessBoard.getSpot(targetX, y).isEmpty()) {
+            buttons[targetX][y].setBackground(Color.GREEN);
+
+            // If it's the pawn's initial position, check if the spot two steps forward is empty and
+            // highlight it
+            if ((isWhite && x == 6) || (!isWhite && x == 1)) {
+                int doubleStepTargetX = targetX + stepForward;
+                if (doubleStepTargetX >= 0 && doubleStepTargetX < 8
+                        && chessBoard.getSpot(doubleStepTargetX, y).isEmpty()) {
+                    buttons[doubleStepTargetX][y].setBackground(Color.GREEN);
+                }
+            }
+        }
+
+        // Check if the spot diagonally forward left has an opponent's piece, highlight it
+        if (targetX >= 0 && targetX < 8 && y > 0) {
+            Spot leftDiagonalSpot = chessBoard.getSpot(targetX, y - 1);
+            if (!leftDiagonalSpot.isEmpty() && leftDiagonalSpot.getPiece().isWhite() != isWhite) {
+                buttons[targetX][y - 1].setBackground(Color.GREEN);
+            }
+        }
+
+        // Check if the spot diagonally forward right has an opponent's piece, highlight it
+        if (targetX >= 0 && targetX < 8 && y < 7) {
+            Spot rightDiagonalSpot = chessBoard.getSpot(targetX, y + 1);
+            if (!rightDiagonalSpot.isEmpty() && rightDiagonalSpot.getPiece().isWhite() != isWhite) {
+                buttons[targetX][y + 1].setBackground(Color.GREEN);
+            }
+        }
+
+        // Remove highlighting for steps beyond one step forward
+        for (int i = targetX + stepForward; i >= 0 && i < 8; i += stepForward) {
+            if (!chessBoard.getSpot(i, y).isEmpty()) {
+                break;
+            }
+            buttons[i][y].setBackground(null);
+        }
+    }
+
+
+
+    private void movePiece(int startX, int startY, int endX, int endY) {
+        Spot startSpot = chessBoard.getSpot(startX, startY);
+        Spot endSpot = chessBoard.getSpot(endX, endY);
+
+        if (startSpot.getPiece().getType() == PieceType.PAWN) {
+            int stepForward = startSpot.getPiece().isWhite() ? -1 : 1;
+            if (Math.abs(startX - endX) > 1) {
+                System.out.println("Pawn can only move one step from its starting position");
+                return;
+            }
+        }
+
+        // Check if the destination spot is empty
+        if (endSpot.isEmpty()) {
+            // Move the piece
+            endSpot.setPiece(startSpot.getPiece());
+            startSpot.setPiece(null);
+            setPieceIcon(buttons[startX][startY], null); // Clear the icon on the start button
+            setPieceIcon(buttons[endX][endY], endSpot.getPiece()); // Set the icon on the end button
+        } else {
+            System.out.println("Invalid move: destination spot is occupied.");
+        }
+        // Set the icon on the end button
+    }
+
 
     // get corresponding button for the spot
     private JButton getButton(int x, int y) {
@@ -109,8 +183,8 @@ public class ChessGame extends JFrame {
                     "rook_black.png"};
             for (int i = 0; i < paths.length; i++) {
                 Image originalImage = ImageIO.read(new File("chessgame/icons/" + paths[i]));
-                int width = 50; // Set your desired width
-                int height = 50; // Set your desired height
+                int width = 40; // Set your desired width
+                int height = 40; // Set your desired height
                 Image resizedImage =
                         originalImage.getScaledInstance(width, height, Image.SCALE_SMOOTH);
                 icons[i] = new ImageIcon(resizedImage);
