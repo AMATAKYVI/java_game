@@ -246,7 +246,22 @@ public class ChessGame extends JFrame {
                 setPieceIcon(buttons[endX][endY], endSpot.getPiece()); // Set the icon on the end
                                                                        // button
             } else {
-                System.out.println("Invalid move: destination spot is occupied.");
+                // Check if the destination spot is occupied by an opponent's piece
+                if (endSpot.getPiece().isWhite() != startSpot.getPiece().isWhite()) {
+                    // Capture the opponent's piece
+                    System.out.println("Captured: " + endSpot.getPiece().getType() + " at " + endX
+                            + ", " + endY);
+                    endSpot.setPiece(startSpot.getPiece());
+                    startSpot.setPiece(null);
+                    setPieceIcon(buttons[startX][startY], null); // Clear the icon on the start
+                                                                 // button
+                    setPieceIcon(buttons[endX][endY], endSpot.getPiece()); // Set the icon on the
+                                                                           // end button
+                } else {
+                    System.out.println(
+                            "Invalid move: destination spot is occupied by your own piece.");
+                    return;
+                }
             }
 
             // Switch turns
@@ -255,6 +270,7 @@ public class ChessGame extends JFrame {
             System.out.println("Invalid move: It's not your turn.");
         }
     }
+
 
 
     // get corresponding button for the spot
