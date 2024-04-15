@@ -16,6 +16,7 @@ public class ChessGame extends JFrame {
     private JButton[][] buttons = new JButton[8][8];
     private JButton selectedButton = null;
     private boolean hasPawnMoved = false;
+    private boolean isWhiteTurn = true; // Flag to keep track of whose turn it is
 
     public ChessGame() {
         this.chessBoard = new Board();
@@ -41,6 +42,12 @@ public class ChessGame extends JFrame {
         gbc.gridy = 0;
         gbc.gridwidth = 4; // Span 4 columns
         contentPane.add(restartButton, gbc);
+        // Add ActionListener to the restartButton
+        restartButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                restartGame(); // Call the restartGame method
+            }
+        });
 
         // Add start game button
         JButton startButton = new JButton("Start Game");
@@ -98,6 +105,10 @@ public class ChessGame extends JFrame {
         this.chessBoard = new Board();
         // Reset button icons
         resetButtonIcons();
+        selectedButton = null;
+        hasPawnMoved = false;
+        isWhiteTurn = true;
+
     }
 
     // Method to reset button icons
@@ -145,47 +156,53 @@ public class ChessGame extends JFrame {
     }
 
     private void highlightValidMoves(int x, int y, boolean isWhite) {
-        int stepForward = isWhite ? -1 : 1;
-        int targetX = x + stepForward;
+        // Check if it's the current player's turn
+        if ((isWhite && isWhiteTurn) || (!isWhite && !isWhiteTurn)) {
+            int stepForward = isWhite ? -1 : 1;
+            int targetX = x + stepForward;
 
-        // Check if the spot one step forward is empty and highlight it
-        if (targetX >= 0 && targetX < 8 && chessBoard.getSpot(targetX, y).isEmpty()) {
-            buttons[targetX][y].setOpaque(true);
-            buttons[targetX][y].setBackground(Color.GREEN);
+            // Check if the spot one step forward is empty and highlight it
+            if (targetX >= 0 && targetX < 8 && chessBoard.getSpot(targetX, y).isEmpty()) {
+                buttons[targetX][y].setOpaque(true);
+                buttons[targetX][y].setBackground(Color.GREEN);
 
-            // If it's the pawn's initial position, check if the spot two steps forward is empty and
-            // highlight it
-            if ((isWhite && x == 1) || (!isWhite && x == 6)) { // Updated condition here
-                int doubleStepTargetX = targetX + stepForward;
-                if (doubleStepTargetX >= 0 && doubleStepTargetX < 8
-                        && chessBoard.getSpot(doubleStepTargetX, y).isEmpty()) {
-                    buttons[doubleStepTargetX][y].setBackground(Color.GREEN);
+                // If it's the pawn's initial position, check if the spot two steps forward is empty
+                // and
+                // highlight it
+                if ((isWhite && x == 1) || (!isWhite && x == 6)) {
+                    int doubleStepTargetX = targetX + stepForward;
+                    if (doubleStepTargetX >= 0 && doubleStepTargetX < 8
+                            && chessBoard.getSpot(doubleStepTargetX, y).isEmpty()) {
+                        buttons[doubleStepTargetX][y].setBackground(Color.GREEN);
+                    }
                 }
             }
-        }
 
-        // Check if the spot diagonally forward left has an opponent's piece, highlight it
-        if (targetX >= 0 && targetX < 8 && y > 0) {
-            Spot leftDiagonalSpot = chessBoard.getSpot(targetX, y - 1);
-            if (!leftDiagonalSpot.isEmpty() && leftDiagonalSpot.getPiece().isWhite() != isWhite) {
-                buttons[targetX][y - 1].setBackground(Color.GREEN);
+            // Check if the spot diagonally forward left has an opponent's piece, highlight it
+            if (targetX >= 0 && targetX < 8 && y > 0) {
+                Spot leftDiagonalSpot = chessBoard.getSpot(targetX, y - 1);
+                if (!leftDiagonalSpot.isEmpty()
+                        && leftDiagonalSpot.getPiece().isWhite() != isWhite) {
+                    buttons[targetX][y - 1].setBackground(Color.GREEN);
+                }
             }
-        }
 
-        // Check if the spot diagonally forward right has an opponent's piece, highlight it
-        if (targetX >= 0 && targetX < 8 && y < 7) {
-            Spot rightDiagonalSpot = chessBoard.getSpot(targetX, y + 1);
-            if (!rightDiagonalSpot.isEmpty() && rightDiagonalSpot.getPiece().isWhite() != isWhite) {
-                buttons[targetX][y + 1].setBackground(Color.GREEN);
+            // Check if the spot diagonally forward right has an opponent's piece, highlight it
+            if (targetX >= 0 && targetX < 8 && y < 7) {
+                Spot rightDiagonalSpot = chessBoard.getSpot(targetX, y + 1);
+                if (!rightDiagonalSpot.isEmpty()
+                        && rightDiagonalSpot.getPiece().isWhite() != isWhite) {
+                    buttons[targetX][y + 1].setBackground(Color.GREEN);
+                }
             }
-        }
 
-        // Remove highlighting for steps beyond one step forward
-        for (int i = targetX + stepForward; i >= 0 && i < 8; i += stepForward) {
-            if (!chessBoard.getSpot(i, y).isEmpty()) {
-                break;
+            // Remove highlighting for steps beyond one step forward
+            for (int i = targetX + stepForward; i >= 0 && i < 8; i += stepForward) {
+                if (!chessBoard.getSpot(i, y).isEmpty()) {
+                    break;
+                }
+                buttons[i][y].setBackground(null);
             }
-            buttons[i][y].setBackground(null);
         }
     }
 
@@ -195,39 +212,48 @@ public class ChessGame extends JFrame {
         Spot startSpot = chessBoard.getSpot(startX, startY);
         Spot endSpot = chessBoard.getSpot(endX, endY);
 
-        if (startSpot.getPiece().getType() == PieceType.PAWN) {
+        // Check if it's the correct side's turn to move
+        if ((isWhiteTurn && startSpot.getPiece().isWhite())
+                || (!isWhiteTurn && !startSpot.getPiece().isWhite())) {
             int stepForward = startSpot.getPiece().isWhite() ? -1 : 1;
-            if (hasPawnMoved) {
-                // If the pawn has moved before, only allow it to move one step forward
-                if (endX - startX != stepForward || Math.abs(endY - startY) > 1) {
-                    System.out.println("Invalid move: Pawn can only move forward one step.");
-                    return; // Exit the method if the move is invalid
+            if (startSpot.getPiece().getType() == PieceType.PAWN) {
+                if (hasPawnMoved) {
+                    // If the pawn has moved before, only allow it to move one step forward
+                    if (endX - startX != stepForward || Math.abs(endY - startY) > 1) {
+                        System.out.println("Invalid move: Pawn can only move forward one step.");
+                        return; // Exit the method if the move is invalid
+                    }
+                } else {
+                    // If the pawn hasn't moved before, allow it to move two steps forward
+                    if ((endX - startX != stepForward && endX - startX != 2 * stepForward)
+                            || Math.abs(endY - startY) > 1) {
+                        System.out.println(
+                                "Invalid move: Pawn can move forward two steps on its first move.");
+                        return; // Exit the method if the move is invalid
+                    }
                 }
-            } else {
-                // If the pawn hasn't moved before, allow it to move two steps forward
-                if ((endX - startX != stepForward && endX - startX != 2 * stepForward)
-                        || Math.abs(endY - startY) > 1) {
-                    System.out.println(
-                            "Invalid move: Pawn can move forward two steps on its first move.");
-                    return; // Exit the method if the move is invalid
-                }
+
+                // Update the flag to indicate that the pawn has moved
+                hasPawnMoved = true;
             }
 
-            // Update the flag to indicate that the pawn has moved
-            hasPawnMoved = true;
-        }
+            // Check if the destination spot is empty
+            if (endSpot.isEmpty()) {
+                // Move the piece
+                endSpot.setPiece(startSpot.getPiece());
+                startSpot.setPiece(null);
+                setPieceIcon(buttons[startX][startY], null); // Clear the icon on the start button
+                setPieceIcon(buttons[endX][endY], endSpot.getPiece()); // Set the icon on the end
+                                                                       // button
+            } else {
+                System.out.println("Invalid move: destination spot is occupied.");
+            }
 
-        // Check if the destination spot is empty
-        if (endSpot.isEmpty()) {
-            // Move the piece
-            endSpot.setPiece(startSpot.getPiece());
-            startSpot.setPiece(null);
-            setPieceIcon(buttons[startX][startY], null); // Clear the icon on the start button
-            setPieceIcon(buttons[endX][endY], endSpot.getPiece()); // Set the icon on the end button
+            // Switch turns
+            isWhiteTurn = !isWhiteTurn;
         } else {
-            System.out.println("Invalid move: destination spot is occupied.");
+            System.out.println("Invalid move: It's not your turn.");
         }
-        // Set the icon on the end button
     }
 
 
