@@ -1,0 +1,143 @@
+predefined methods and user defined methods
+create a modular code
+
+
+value returning methods and void methods
+accept the parameters expect computation and return value
+
+public static int abs(int number){
+    if(number < 0)
+        number = -number;
+    return number;
+}
+
+public static double pow(double base, double exponent)
+
+modifier(s) returnType methodName(forma parameters list){
+    statement
+}
+
+public, private, protected, static, abstract, final
+base on the accesibility of that method modifiers
+
+returnType data type that return from that method
+
+methodName the name to call that method
+
+public static double larger(double x, double y)
+{
+    double max;
+
+    if(x >= y){
+        max = y;
+    }else{
+        max = y;
+    }
+    return max;
+}
+
+num = larger(23, 13);
+System.out.println("Large number " + num);
+
+modifiers void methodName(formal parameter)
+{
+    statement
+}
+
+public static void printStars(int blacks, int starsInLine){
+    int count = 1;
+
+    for(count <= blanks; counter++){
+        System.out.println(" ");
+    }
+    for(count = 1; count <= starsInLine; counter++){
+        System.out.println(" * ");
+    }
+    System.out.println();
+}
+
+primative data type variables as parameters
+
+reference variable as parameters
+memory allocation referce variable of the string variables
+type as parameters a precaution
+
+primitive type wrapper classes as parameters
+
+scope of an identifier within a class
+local identifier an identifier declared within a method or block
+that is visible only within that method or block
+
+java does not allow the nesting method, that is
+you cannot include the definition of one method in a class
+the body of another method is not visible
+
+within the method or block an identifier mus be declared before
+it can be used in the
+
+public static void illegalIdentifierDeclaration(){
+    int x;
+    {
+        double x; // x already declared clashing problem
+    }
+}
+
+method overloading
+
+overload meaning have the same name within the same class scope
+
+public void methodOne(int x);
+public void methodTwo(int x, int y);
+public void methodThree(int x, int y, int z);
+
+these method just have the same but different parameters
+ etcc.. if it keep going...
+ creating several methods, within a class with the same name
+
+but base on the user input that method will triggers
+base on the parameters that was pass when the method was
+the user invoke the methods
+
+public void methodX();
+public void methodX(int x);
+public void methodX(int x, int y);
+etc.....
+
+avoid bugs one piece at the time of
+
+that why modular exists 
+
+methods enable you to divide a program into managable tasks
+
+
+modifiers class ClassIdentifier modifier{
+    class members;
+}
+
+private protected, public are reserved words
+constructor will be execute when the class is instantiating
+
+class Clock
+-hr: int
+-min: int
+-sec: int
++Clock();
++Clock(int, int, int);
++setTime(int); void
++getHours(); int
+
+etc....
+
+variable declaration and object instantiation
+
+Clock frenchClock = new Clock(1,1,1);
+
+frenchClock ---> Clock class
+
+class scope even though frenchClock is instantiation Clock class
+still some of the members of clock class can not be access by the instantiation
+
+private protected public static etc....
+
+just like your gramma have secret from you even though you inherit her traits
+
